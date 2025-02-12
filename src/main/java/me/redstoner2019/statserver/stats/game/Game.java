@@ -12,14 +12,11 @@ public class Game {
     @Id
     private String id;
 
-    @Column(name="name")
+    @Column(name="name", unique = true)
     private String name;
 
-    @Column(name="version")
-    private String version;
-
-    @Column(name="versionNumber", unique=true)
-    private long versionNumber;
+    @Column(name="owner")
+    private String owner;
 
     @Column
     private long created;
@@ -28,12 +25,15 @@ public class Game {
         this.created = System.currentTimeMillis();
     }
 
-    public Game(String name, String version, long versionNumber) {
+    public Game(String name, String owner) {
         this.id = UUID.randomUUID().toString();
         this.name = name;
-        this.version = version;
-        this.versionNumber = versionNumber;
         this.created = System.currentTimeMillis();
+        this.owner = owner;
+    }
+
+    public String getOwner() {
+        return owner;
     }
 
     public long getCreated() {
@@ -48,32 +48,17 @@ public class Game {
         return name;
     }
 
-    public String getVersion() {
-        return version;
-    }
-
-    public long getVersionNumber() {
-        return versionNumber;
-    }
-
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id",id);
         json.put("name",name);
-        json.put("version",version);
-        json.put("versionNumber",versionNumber);
         json.put("created",created);
+        json.put("owner",owner);
         return json;
     }
 
     @Override
     public String toString() {
-        JSONObject json = new JSONObject();
-        json.put("id",id);
-        json.put("name",name);
-        json.put("version",version);
-        json.put("versionNumber",versionNumber);
-        json.put("created",created);
-        return json.toString();
+        return toJSON().toString();
     }
 }

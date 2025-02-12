@@ -19,6 +19,9 @@ public class Challenge {
     @Column(name="description")
     private String description;
 
+    @Column(name="owner")
+    private String owner;
+
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name="data")
@@ -31,13 +34,18 @@ public class Challenge {
         this.created = System.currentTimeMillis();
     }
 
-    public Challenge(String name, String description, String game, JSONObject data) {
+    public Challenge(String name, String description, String game, String owner, JSONObject data) {
         this.id = UUID.randomUUID().toString();
         this.name = name;
         this.created = System.currentTimeMillis();
         this.description = description;
         this.game = game;
         this.data = data.toString();
+        this.owner = owner;
+    }
+
+    public String getOwner() {
+        return owner;
     }
 
     public String getData() {
@@ -71,17 +79,12 @@ public class Challenge {
         json.put("description",description);
         json.put("created",created);
         json.put("game",game);
+        json.put("owner",owner);
         return json;
     }
 
     @Override
     public String toString() {
-        JSONObject json = new JSONObject();
-        json.put("id",id);
-        json.put("name", name);
-        json.put("description",description);
-        json.put("created",created);
-        json.put("game",game);
-        return json.toString();
+        return toJSON().toString();
     }
 }
