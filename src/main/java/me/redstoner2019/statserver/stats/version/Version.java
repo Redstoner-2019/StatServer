@@ -1,6 +1,7 @@
 package me.redstoner2019.statserver.stats.version;
 
 import jakarta.persistence.*;
+import org.json.JSONObject;
 
 import java.util.UUID;
 
@@ -17,7 +18,7 @@ public class Version {
     @Column(name="version")
     private String version;
 
-    @Column(name="versionNumber", unique=true)
+    @Column(name="versionNumber")
     private long versionNumber;
 
     public Version() {
@@ -44,5 +45,13 @@ public class Version {
 
     public long getVersionNumber() {
         return versionNumber;
+    }
+
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put("id",id);
+        json.put("game",game);
+        json.put("version", version);
+        return json;
     }
 }

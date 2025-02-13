@@ -1,4 +1,4 @@
-package me.redstoner2019.statserver.stats.challenge;
+package me.redstoner2019.statserver.stats.challenge.entry;
 
 import jakarta.persistence.*;
 import org.json.JSONObject;

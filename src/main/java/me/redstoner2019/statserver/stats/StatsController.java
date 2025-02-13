@@ -1,9 +1,11 @@
 package me.redstoner2019.statserver.stats;
 
 import me.redstoner2019.statserver.stats.challenge.Challenge;
-import me.redstoner2019.statserver.stats.challenge.ChallengeEntry;
-import me.redstoner2019.statserver.stats.challenge.ChallengeEntryJpaRepository;
+import me.redstoner2019.statserver.stats.challenge.entry.ChallengeEntry;
+import me.redstoner2019.statserver.stats.challenge.entry.ChallengeEntryJpaRepository;
 import me.redstoner2019.statserver.stats.challenge.ChallengeJpaRepository;
+import me.redstoner2019.statserver.stats.challenge.version.ChallengeVersion;
+import me.redstoner2019.statserver.stats.challenge.version.ChallengeVersionJpaRepository;
 import me.redstoner2019.statserver.stats.game.Game;
 import me.redstoner2019.statserver.stats.game.GameJpaRepository;
 import me.redstoner2019.statserver.stats.version.Version;
@@ -33,16 +35,24 @@ public class StatsController {
     public final ChallengeJpaRepository challengeJpaRepository;
     public final ChallengeEntryJpaRepository challengeEntryJpaRepository;
     public final VersionJpaRepository versionJpaRepository;
+    public final ChallengeVersionJpaRepository challengeVersionJpaRepository;
     private final Logger logger = Logger.getLogger(StatsController.class.getName());
     private final String authIP = "http://158.220.105.209:8080";
 
-    public StatsController(GameJpaRepository gameJpaRepository, ChallengeJpaRepository challengeJpaRepository, ChallengeEntryJpaRepository challengeEntryJpaRepository, VersionJpaRepository versionJpaRepository) {
+    public StatsController(GameJpaRepository gameJpaRepository, ChallengeJpaRepository challengeJpaRepository, ChallengeEntryJpaRepository challengeEntryJpaRepository, VersionJpaRepository versionJpaRepository, ChallengeVersionJpaRepository challengeVersionJpaRepository) {
         this.gameJpaRepository = gameJpaRepository;
         this.challengeJpaRepository = challengeJpaRepository;
         this.challengeEntryJpaRepository = challengeEntryJpaRepository;
         this.versionJpaRepository = versionJpaRepository;
+        this.challengeVersionJpaRepository = challengeVersionJpaRepository;
 
-        init();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                init();
+                logger.log(Level.INFO,"Init done");
+            }
+        }).start();
     }
 
     public void init(){
@@ -50,6 +60,7 @@ public class StatsController {
         challengeJpaRepository.deleteAll();
         challengeEntryJpaRepository.deleteAll();
         versionJpaRepository.deleteAll();
+        challengeVersionJpaRepository.deleteAll();
 
         String username = "Redstoner_2019";
 
@@ -72,6 +83,15 @@ public class StatsController {
         versionJpaRepository.save(new Version(game.getId(),"1.1.0",1));
         versionJpaRepository.save(new Version(game.getId(),"1.2.0",2));
         versionJpaRepository.save(new Version(game.getId(),"1.3.0",3));
+
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.0.0",ventablack.getId()));
+
+        for (int i = 0; i < 5; i++) {
+            data.put("powerLeft",Math.random());
+
+            ChallengeEntry entry = new ChallengeEntry(ventablack.getId(),data.toString(),username, data.getDouble("powerLeft"));
+            challengeEntryJpaRepository.save(entry);
+        }
     }
 
     @PostMapping("/stats/game/create")
@@ -156,6 +176,14 @@ public class StatsController {
                 return getError(400,"Missing example data");
             }
 
+            if(!request.has("versions")){
+                return getError(400,"Missing versions");
+            }
+
+            if(!request.has("token") && !headers.containsKey("token")){
+                return getError(400,"Missing version number");
+            }
+
             String token;
             String username;
             if(headers.containsKey("token")){
@@ -196,9 +224,88 @@ public class StatsController {
 
             challengeJpaRepository.save(challenge);
 
+            JSONArray versions = request.getJSONArray("versions");
+            for (int i = 0; i < versions.length(); i++) {
+                String version = versions.getString(i);
+
+                ChallengeVersion challengeVersion = new ChallengeVersion(version, challenge.getId());
+
+                challengeVersionJpaRepository.save(challengeVersion);
+            }
+
             return ResponseEntity.ok(challenge.toJSON().toString());
         }catch (Exception e){
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/stats/version/create")
+    public ResponseEntity<String> createVersion(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+        try{
+            JSONObject request = new JSONObject(s);
+
+            if(!request.has("game")){
+                return getError(400,"Missing game");
+            }
+
+            if(!request.has("version")){
+                return getError(400,"Missing version");
+            }
+
+            if(!request.has("versionNumber")){
+                return getError(400,"Missing versionNumber");
+            }
+
+            if(!request.has("token") && !headers.containsKey("token")){
+                return getError(400,"Missing version number");
+            }
+
+            String token;
+            String username;
+            if(headers.containsKey("token")){
+                token = headers.get("token").get(0);
+            } else {
+                token = request.getString("token");
+            }
+
+            JSONObject req = new JSONObject();
+            req.put("token",token);
+
+            JSONObject data = Requests.request(authIP + "/verifyToken",req);
+
+            if(data.getInt("status") == 0){
+                req = new JSONObject();
+                req.put("token",token);
+
+                data = Requests.request(authIP + "/tokenInfo",req);
+
+                username = data.getString("username");
+            } else {
+                return getError(401,"Invalid token, " + data.getString("message"));
+            }
+
+            System.out.println(username);
+
+            Optional<Version> versionOpt = versionJpaRepository.findVersionByGameAndVersionNumber(request.getString("game"), request.getLong("versionNumber"));
+
+            if(versionOpt.isPresent()){
+                return ResponseEntity.status(210).body(versionOpt.get().toJSON().toString());
+            }
+
+            versionOpt = versionJpaRepository.findVersionByGameAndVersion(request.getString("game"), request.getString("version"));
+
+            if(versionOpt.isPresent()){
+                return ResponseEntity.status(210).body(versionOpt.get().toJSON().toString());
+            }
+
+            Version version = new Version(request.getString("game"), request.getString("version"), request.getLong("versionNumber"));
+
+            versionJpaRepository.save(version);
+
+            return ResponseEntity.ok(version.toJSON().toString());
+        }catch (Exception e){
+            e.printStackTrace();
+            return getError(400,e.getMessage());
         }
     }
 
@@ -261,6 +368,17 @@ public class StatsController {
         }
     }
 
+
+
+
+
+
+
+
+
+
+
+
     @PostMapping("/stats/game/getAll")
     public ResponseEntity<String> getAllGames(@RequestBody String s) {
         try{
@@ -271,15 +389,29 @@ public class StatsController {
             logger.log(Level.INFO,"All Games");
 
             List<Game> gameList = gameJpaRepository.findAll();
-            //gameList.sort((o1, o2) -> (int) (o1.getVersionNumber() - o2.getVersionNumber()));
+
             for(Game game : gameList){
-                games.put(game.toJSON());
+                JSONObject g = game.toJSON();
+                JSONArray versions = new JSONArray();
+
+                for(Version version : versionJpaRepository.findAllByGame(game.getId())){
+                    versions.put(version.getId());
+                }
+
+                g.put("versions",versions);
+                games.put(g);
             }
             return ResponseEntity.ok(games.toString());
         }catch (Exception e){
             return ResponseEntity.badRequest().body(e.getLocalizedMessage());
         }
     }
+
+
+
+
+
+
 
     @PostMapping("/stats/challengeEntry/getAll")
     public ResponseEntity<String> getAllChallengeEntries(@RequestBody String s) {
