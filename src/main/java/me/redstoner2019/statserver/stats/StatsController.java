@@ -83,6 +83,7 @@ public class StatsController {
         versionJpaRepository.save(new Version(game.getId(),"1.1.0",1));
         versionJpaRepository.save(new Version(game.getId(),"1.2.0",2));
         versionJpaRepository.save(new Version(game.getId(),"1.3.0",3));
+        versionJpaRepository.save(new Version(game.getId(),"1.3.0",4));
 
         challengeVersionJpaRepository.save(new ChallengeVersion("1.0.0",ventablack.getId()));
 
@@ -304,7 +305,6 @@ public class StatsController {
 
             return ResponseEntity.ok(version.toJSON().toString());
         }catch (Exception e){
-            e.printStackTrace();
             return getError(400,e.getMessage());
         }
     }
@@ -335,7 +335,7 @@ public class StatsController {
 
             Optional<Challenge> challengeOpt = challengeJpaRepository.findById(request.getString("challengeId"));
 
-            if(!challengeOpt.isPresent()){
+            if(challengeOpt.isEmpty()){
                 return getError(400,"This challenge does not exist");
             }
 
@@ -450,7 +450,6 @@ public class StatsController {
             }
             return ResponseEntity.ok(challengeEntries.toString());
         }catch (Exception e){
-            e.printStackTrace();
             return ResponseEntity.badRequest().body(e.getLocalizedMessage());
         }
     }
