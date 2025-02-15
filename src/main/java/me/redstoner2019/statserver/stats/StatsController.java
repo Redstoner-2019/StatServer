@@ -8,6 +8,8 @@ import me.redstoner2019.statserver.stats.challenge.version.ChallengeVersion;
 import me.redstoner2019.statserver.stats.challenge.version.ChallengeVersionJpaRepository;
 import me.redstoner2019.statserver.stats.game.Game;
 import me.redstoner2019.statserver.stats.game.GameJpaRepository;
+import me.redstoner2019.statserver.stats.util.AuthenticationHelper;
+import me.redstoner2019.statserver.stats.util.AuthenticationResult;
 import me.redstoner2019.statserver.stats.version.Version;
 import me.redstoner2019.statserver.stats.version.VersionJpaRepository;
 import me.redstoner2019.util.http.Requests;
@@ -17,10 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -37,7 +36,6 @@ public class StatsController {
     public final VersionJpaRepository versionJpaRepository;
     public final ChallengeVersionJpaRepository challengeVersionJpaRepository;
     private final Logger logger = Logger.getLogger(StatsController.class.getName());
-    private final String authIP = "http://158.220.105.209:8080";
 
     public StatsController(GameJpaRepository gameJpaRepository, ChallengeJpaRepository challengeJpaRepository, ChallengeEntryJpaRepository challengeEntryJpaRepository, VersionJpaRepository versionJpaRepository, ChallengeVersionJpaRepository challengeVersionJpaRepository) {
         this.gameJpaRepository = gameJpaRepository;
@@ -83,14 +81,19 @@ public class StatsController {
         versionJpaRepository.save(new Version(game.getId(),"1.1.0",1));
         versionJpaRepository.save(new Version(game.getId(),"1.2.0",2));
         versionJpaRepository.save(new Version(game.getId(),"1.3.0",3));
-        versionJpaRepository.save(new Version(game.getId(),"1.3.0",4));
 
         challengeVersionJpaRepository.save(new ChallengeVersion("1.0.0",ventablack.getId()));
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.1.0",ventablack.getId()));
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.2.0",ventablack.getId()));
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.3.0",ventablack.getId()));
 
-        for (int i = 0; i < 5; i++) {
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.2.0",night6.getId()));
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.3.0",night6.getId()));
+
+        for (int i = 0; i < 50; i++) {
             data.put("powerLeft",Math.random());
 
-            ChallengeEntry entry = new ChallengeEntry(ventablack.getId(),data.toString(),username, data.getDouble("powerLeft"));
+            ChallengeEntry entry = new ChallengeEntry(ventablack.getId(),game.getId(),"1.3.0",data,username, data.getDouble("powerLeft"));
             challengeEntryJpaRepository.save(entry);
         }
     }
@@ -104,38 +107,15 @@ public class StatsController {
                 return getError(400,"Missing Name");
             }
 
-            if(!request.has("token") && !headers.containsKey("token")){
-                return getError(400,"Missing version number");
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
             }
+
+            String username = authResult.getUsername();
 
             String name = request.getString("name");
-
-            String token;
-            String username;
-            if(headers.containsKey("token")){
-                token = headers.get("token").get(0);
-            } else {
-                token = request.getString("token");
-            }
-
-            JSONObject req = new JSONObject();
-            req.put("token",token);
-
-            JSONObject data = Requests.request(authIP + "/verifyToken",req);
-
-            if(data.getInt("status") == 0){
-                req = new JSONObject();
-                req.put("token",token);
-
-                data = Requests.request(authIP + "/tokenInfo",req);
-
-                username = data.getString("username");
-            } else {
-                return getError(401,"Invalid token, " + data.getString("message"));
-            }
-
-            System.out.println(username);
-
 
             Game game = gameJpaRepository.findByName(name);
 
@@ -181,35 +161,13 @@ public class StatsController {
                 return getError(400,"Missing versions");
             }
 
-            if(!request.has("token") && !headers.containsKey("token")){
-                return getError(400,"Missing version number");
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
             }
 
-            String token;
-            String username;
-            if(headers.containsKey("token")){
-                token = headers.get("token").get(0);
-            } else {
-                token = request.getString("token");
-            }
-
-            JSONObject req = new JSONObject();
-            req.put("token",token);
-
-            JSONObject data = Requests.request(authIP + "/verifyToken",req);
-
-            if(data.getInt("status") == 0){
-                req = new JSONObject();
-                req.put("token",token);
-
-                data = Requests.request(authIP + "/tokenInfo",req);
-
-                username = data.getString("username");
-            } else {
-                return getError(401,"Invalid token, " + data.getString("message"));
-            }
-
-            System.out.println(username);
+            String username = authResult.getUsername();
 
             String name = request.getString("name");
             String game = request.getString("game");
@@ -257,35 +215,13 @@ public class StatsController {
                 return getError(400,"Missing versionNumber");
             }
 
-            if(!request.has("token") && !headers.containsKey("token")){
-                return getError(400,"Missing version number");
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
             }
 
-            String token;
-            String username;
-            if(headers.containsKey("token")){
-                token = headers.get("token").get(0);
-            } else {
-                token = request.getString("token");
-            }
-
-            JSONObject req = new JSONObject();
-            req.put("token",token);
-
-            JSONObject data = Requests.request(authIP + "/verifyToken",req);
-
-            if(data.getInt("status") == 0){
-                req = new JSONObject();
-                req.put("token",token);
-
-                data = Requests.request(authIP + "/tokenInfo",req);
-
-                username = data.getString("username");
-            } else {
-                return getError(401,"Invalid token, " + data.getString("message"));
-            }
-
-            System.out.println(username);
+            String username = authResult.getUsername();
 
             Optional<Version> versionOpt = versionJpaRepository.findVersionByGameAndVersionNumber(request.getString("game"), request.getLong("versionNumber"));
 
@@ -310,7 +246,7 @@ public class StatsController {
     }
 
     @PostMapping("/stats/challengeEntry/create")
-    public ResponseEntity<String> createChallengeEntry(@RequestBody String s) {
+    public ResponseEntity<String> createChallengeEntry(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
             JSONObject request = new JSONObject(s);
 
@@ -322,15 +258,26 @@ public class StatsController {
                 return getError(400,"Missing data");
             }
 
-            if(!request.has("userId")){
-                return getError(400,"Missing data");
+            if(!request.has("game")){
+                return getError(400,"Missing game");
+            }
+
+            if(!request.has("version")){
+                return getError(400,"Missing version");
             }
 
             if(!request.has("score")){
                 return getError(400,"Missing score");
             }
 
-            String userId = request.getString("userId");
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
+
+            String username = authResult.getUsername();
+
             JSONObject data = request.getJSONObject("data");
 
             Optional<Challenge> challengeOpt = challengeJpaRepository.findById(request.getString("challengeId"));
@@ -341,7 +288,7 @@ public class StatsController {
 
             Challenge challenge = challengeOpt.get();
 
-            JSONObject exampleData = new JSONObject(challenge.getData());
+            JSONObject exampleData = challenge.getData();
 
             for(String key : exampleData.keySet()){
                 if(!data.has(key)){
@@ -358,7 +305,7 @@ public class StatsController {
                 }
             }
 
-            ChallengeEntry entry = new ChallengeEntry(challenge.getId(), data.toString(), userId, request.getDouble("score"));
+            ChallengeEntry entry = new ChallengeEntry(challenge.getId(),request.getString("game"),request.getString("version"), data, username, request.getDouble("score"));
 
             challengeEntryJpaRepository.save(entry);
 
@@ -368,21 +315,22 @@ public class StatsController {
         }
     }
 
+    /**
+     * Getting
+     */
 
-
-
-
-
-
-
-
-
-
-
-    @PostMapping("/stats/game/getAll")
-    public ResponseEntity<String> getAllGames(@RequestBody String s) {
+    @GetMapping("/stats/game/getAll")
+    public ResponseEntity<String> getAllGames(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
             JSONObject request = new JSONObject(s);
+
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
+
+            String username = authResult.getUsername();
 
             JSONArray games = new JSONArray();
 
@@ -407,14 +355,84 @@ public class StatsController {
         }
     }
 
+    @GetMapping("/stats/versions/getAll")
+    public ResponseEntity<String> getAllVersions(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+        try{
+            JSONObject request = new JSONObject(s);
 
+            if(!request.has("game")){
+                return getError(400,"Missing game");
+            }
 
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
 
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
 
+            String username = authResult.getUsername();
 
+            String game = request.getString("game");
 
-    @PostMapping("/stats/challengeEntry/getAll")
-    public ResponseEntity<String> getAllChallengeEntries(@RequestBody String s) {
+            JSONArray versionsArray = new JSONArray();
+
+            List<Version> versions = versionJpaRepository.findAllByGame(game);
+
+            for(Version version : versions){
+                versionsArray.put(version.toJSON());
+            }
+
+            return ResponseEntity.ok(versionsArray.toString());
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getLocalizedMessage());
+        }
+    }
+
+    @GetMapping("/stats/challenges/getAll")
+    public ResponseEntity<String> getAllChallenges(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+        try{
+            JSONObject request = new JSONObject(s);
+
+            if(!request.has("game")){
+                return getError(400,"Missing game");
+            }
+
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
+
+            String username = authResult.getUsername();
+
+            String game = request.getString("game");
+
+            String version = null;
+
+            if(request.has("version")){
+                version = request.getString("version");
+            }
+
+            JSONArray challengesArray = new JSONArray();
+
+            List<Challenge> challenges = challengeJpaRepository.findByGame(game);
+
+            for(Challenge c : challenges){
+                if(version != null) {
+                    Optional<ChallengeVersion> ocv = challengeVersionJpaRepository.findByVersionAndChallenge(version, c.getId());
+                    if(ocv.isEmpty()) continue;
+                }
+                challengesArray.put(c.toJSON());
+            }
+
+            return ResponseEntity.ok(challengesArray.toString());
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getLocalizedMessage());
+        }
+    }
+
+    @GetMapping("/stats/challengeEntry/getAll")
+    public ResponseEntity<String> getAllChallengeEntries(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
             JSONObject request = new JSONObject(s);
 
@@ -426,33 +444,95 @@ public class StatsController {
                 return getError(400,"Missing pageNumber");
             }
 
+            if(!request.has("challenge")){
+                return getError(400,"Missing challenge");
+            }
+
+            if(!request.has("game")){
+                return getError(400,"Missing game");
+            }
+
+            if(!request.has("version")){
+                return getError(400,"Missing version");
+            }
+
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
+
+            String username = authResult.getUsername();
+
             int pageSize = request.getInt("pageSize");
             int pageNumber = request.getInt("pageNumber");
-            String challenge = null;
-            if(request.has("challenge")){
-                challenge = request.getString("challenge");
-            }
+            String challenge = request.getString("challenge");
+            String game = request.getString("game");
+            String version = request.getString("version");
 
             JSONArray challengeEntries = new JSONArray();
 
-            if(challenge == null){
-                List<ChallengeEntry> challengeEntryList = new ArrayList<>(challengeEntryJpaRepository.findAll());
-                challengeEntryList.sort(Comparator.comparingDouble(ChallengeEntry::getScore).thenComparing(ChallengeEntry::getCreated).reversed());
-                for(ChallengeEntry challengeEntry : challengeEntryList){
-                    challengeEntries.put(challengeEntry.toJSON());
-                }
-            } else {
-                List<ChallengeEntry> challengeEntryList = new ArrayList<>(getChallengeEntries(challenge,pageNumber,pageSize).toList());
-                challengeEntryList.sort(Comparator.comparingDouble(ChallengeEntry::getScore).thenComparing(ChallengeEntry::getCreated).reversed());
-                for(ChallengeEntry challengeEntry : challengeEntryList){
-                    challengeEntries.put(challengeEntry.toJSON());
-                }
+            List<ChallengeEntry> challengeEntryList = new ArrayList<>(getChallengeEntries(challenge,game,version,pageNumber,pageSize).toList());
+            challengeEntryList.sort(Comparator.comparingDouble(ChallengeEntry::getScore).thenComparing(ChallengeEntry::getCreated).reversed());
+            for(ChallengeEntry challengeEntry : challengeEntryList){
+                challengeEntries.put(challengeEntry.toJSON());
             }
             return ResponseEntity.ok(challengeEntries.toString());
         }catch (Exception e){
             return ResponseEntity.badRequest().body(e.getLocalizedMessage());
         }
     }
+
+    @GetMapping("/stats/challengeEntry/getAll/pages")
+    public ResponseEntity<String> getAllChallengeEntriesPages(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+        try{
+            JSONObject request = new JSONObject(s);
+
+            if(!request.has("pageSize")){
+                return getError(400,"Missing pageSize");
+            }
+
+            if(!request.has("challenge")){
+                return getError(400,"Missing pageNumber");
+            }
+
+            if(!request.has("game")){
+                return getError(400,"Missing game");
+            }
+
+            if(!request.has("version")){
+                return getError(400,"Missing version");
+            }
+
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
+
+            String username = authResult.getUsername();
+
+            int pageSize = request.getInt("pageSize");
+            String challenge = request.getString("challenge");
+            String game = request.getString("game");
+            String version = request.getString("version");
+
+            JSONObject result = new JSONObject();
+
+            result.put("pages",getChallengeEntriesPages(challenge,game, version, pageSize));
+
+            return ResponseEntity.ok(result.toString());
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getLocalizedMessage());
+        }
+    }
+
+
+
+
+
+
+
 
     @PostMapping("/stats/game/get")
     public ResponseEntity<String> getGame(@RequestBody String s) {
@@ -476,8 +556,13 @@ public class StatsController {
         return ResponseEntity.status(status).body(response.toString());
     }
 
-    public Page<ChallengeEntry> getChallengeEntries(String challengeId, int page, int size) {
+    public Page<ChallengeEntry> getChallengeEntries(String challengeId,String game, String version, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
-        return challengeEntryJpaRepository.findByChallengeId(challengeId, pageable);
+        return challengeEntryJpaRepository.findByChallengeIdAndGameAndVersionOrderByScore(challengeId,game,version, pageable);
+    }
+
+    public int getChallengeEntriesPages(String challengeId,String game, String version, int size) {
+        PageRequest pageable = PageRequest.of(0, size);
+        return challengeEntryJpaRepository.findByChallengeIdAndGameAndVersionOrderByScore(challengeId,game,version, pageable).getTotalPages();
     }
 }

@@ -1,6 +1,7 @@
 package me.redstoner2019.statserver.stats.challenge;
 
 import jakarta.persistence.*;
+import me.redstoner2019.statserver.stats.util.JSONObjectConverter;
 import org.json.JSONObject;
 
 import java.util.UUID;
@@ -24,8 +25,9 @@ public class Challenge {
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
-    @Column(name="data")
-    private String data;
+    @Convert(converter = JSONObjectConverter.class)
+    @Column(columnDefinition = "TEXT", name = "data")
+    private JSONObject data;
 
     @Column
     private long created;
@@ -40,7 +42,7 @@ public class Challenge {
         this.created = System.currentTimeMillis();
         this.description = description;
         this.game = game;
-        this.data = data.toString();
+        this.data = data;
         this.owner = owner;
     }
 
@@ -48,7 +50,7 @@ public class Challenge {
         return owner;
     }
 
-    public String getData() {
+    public JSONObject getData() {
         return data;
     }
 
