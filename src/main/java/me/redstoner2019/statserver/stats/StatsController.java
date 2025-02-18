@@ -47,7 +47,7 @@ public class StatsController {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                init();
+                //init();
                 logger.log(Level.INFO,"Init done");
             }
         }).start();
