@@ -17,6 +17,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -520,6 +521,43 @@ public class StatsController {
             JSONObject result = new JSONObject();
 
             result.put("pages",getChallengeEntriesPages(challenge,game, version, pageSize));
+
+            return ResponseEntity.ok(result.toString());
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getLocalizedMessage());
+        }
+    }
+
+    @GetMapping("/stats/challengeEntry/getAllSorted")
+    public ResponseEntity<String> getAllSorted(@RequestBody String s){
+        try{
+            JSONObject jsonObject = new JSONObject(s);
+
+            int a = jsonObject.getInt("a");
+            int b = jsonObject.getInt("b");
+
+            boolean ascending = jsonObject.has("ascending") ? jsonObject.getBoolean("ascending") : true;
+            boolean zeroIndex = jsonObject.has("zeroIndex") ? jsonObject.getBoolean("zeroIndex") : false;
+            String sortBy = jsonObject.has("sortBy") ? jsonObject.getString("sortBy") : "score";
+
+            if(zeroIndex) {
+                a++;
+                b++;
+            }
+
+            int pageSize = b - a + 1;
+            int pageNumber = a / pageSize;
+
+            Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+            PageRequest pageRequest = PageRequest.of(pageNumber, pageSize, sort);
+
+            Page<ChallengeEntry> page = challengeEntryJpaRepository.findAll(pageRequest);
+
+            JSONArray result = new JSONArray();
+
+            for(ChallengeEntry ce : page.getContent()){
+                result.put(ce.toJSON());
+            }
 
             return ResponseEntity.ok(result.toString());
         }catch (Exception e){
