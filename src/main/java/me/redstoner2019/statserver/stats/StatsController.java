@@ -504,7 +504,7 @@ public class StatsController {
                 run.put("id", i + "-A");
                 run.put("name", "Test Run " + i);
                 run.put("scoreText","15:23");
-                run.put("imageUrl","https://media.discordapp.net/attachments/1232427770311737364/1341398159217135647/sut6soi9gcu51.webp?ex=67b5d9e3&is=67b48863&hm=b3f82709a63e826d8e10a2684b74039d44d8ee4eb032e3d06804d88d20a00924&=&format=webp");
+                run.put("imageUrl","https://preview.redd.it/sut6soi9gcu51.jpg?width=1080&crop=smart&auto=webp&s=c537958466522a0c7a477658eb85a1f9da0eb68b");
                 runs.put(run);
             }
             return ResponseEntity.ok(runs.toString());
