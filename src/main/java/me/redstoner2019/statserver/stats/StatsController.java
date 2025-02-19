@@ -320,7 +320,7 @@ public class StatsController {
      * Getting
      */
 
-    @GetMapping("/stats/game/getAll")
+    @PostMapping("/stats/game/getAll")
     public ResponseEntity<String> getAllGames(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
             JSONObject request = new JSONObject(s);
@@ -356,7 +356,7 @@ public class StatsController {
         }
     }
 
-    @GetMapping("/stats/versions/getAll")
+    @PostMapping("/stats/versions/getAll")
     public ResponseEntity<String> getAllVersions(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
             JSONObject request = new JSONObject(s);
@@ -389,7 +389,7 @@ public class StatsController {
         }
     }
 
-    @GetMapping("/stats/challenges/getAll")
+    @PostMapping("/stats/challenges/getAll")
     public ResponseEntity<String> getAllChallenges(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
             JSONObject request = new JSONObject(s);
@@ -432,7 +432,7 @@ public class StatsController {
         }
     }
 
-    @GetMapping("/stats/challengeEntry/getAll")
+    @PostMapping("/stats/challengeEntry/getAll")
     public ResponseEntity<String> getAllChallengeEntries(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
             JSONObject request = new JSONObject(s);
@@ -484,7 +484,37 @@ public class StatsController {
         }
     }
 
-    @GetMapping("/stats/challengeEntry/getAll/pages")
+    @PostMapping("/stats/recentRuns/getAll")
+    public ResponseEntity<String> getAllRecentRuns(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+        try{
+            JSONObject request = new JSONObject(s);
+
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
+
+            String username = authResult.getUsername();
+
+            JSONArray runs = new JSONArray();
+
+            for (int i = 0; i < 30; i++) {
+                JSONObject run = new JSONObject();
+                run.put("id", i + "-A");
+                run.put("name", "Test Run " + i);
+                run.put("scoreText","15:23");
+                run.put("imageUrl","https://media.discordapp.net/attachments/1232427770311737364/1341398159217135647/sut6soi9gcu51.webp?ex=67b5d9e3&is=67b48863&hm=b3f82709a63e826d8e10a2684b74039d44d8ee4eb032e3d06804d88d20a00924&=&format=webp");
+                runs.put(run);
+            }
+            return ResponseEntity.ok(runs.toString());
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getLocalizedMessage());
+        }
+    }
+
+
+    @PostMapping("/stats/challengeEntry/getAll/pages")
     public ResponseEntity<String> getAllChallengeEntriesPages(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
             JSONObject request = new JSONObject(s);
