@@ -119,16 +119,16 @@ public class StatsController {
 
             String name = request.getString("name");
 
-            Game game = gameJpaRepository.findByName(name);
+            Optional<Game> gameOpt = gameJpaRepository.findByName(name);
 
-            if(game != null){
+            if(gameOpt.isPresent()){
                 return getError(400,"This game already exists");
             }
 
 
-            String icon = request.optString("icon","./default.png");
+            String icon = request.optString("icon","/default.png");
 
-            game = new Game(name, username, icon);
+            Game game = new Game(name, username, icon);
             gameJpaRepository.save(game);
 
             JSONObject response = new JSONObject();
@@ -137,6 +137,7 @@ public class StatsController {
 
             return ResponseEntity.ok(response.toString());
         }catch (Exception e){
+            e.printStackTrace();
             return getError(400,e.getLocalizedMessage());
         }
     }
@@ -626,14 +627,25 @@ public class StatsController {
 
 
 
-
-    @PostMapping("/stats/game/get")
-    public ResponseEntity<String> getGame(@RequestBody String s) {
+    @RequestMapping(value="/stats/game/get", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> getGame(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
+            if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject request = new JSONObject(s);
+
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
+
+            String username = authResult.getUsername();
 
             if (request.has("uuid")){
                 Optional<Game> gameOpt = gameJpaRepository.findById(request.getString("uuid"));
+                return gameOpt.map(game -> ResponseEntity.ok(game.toJSON().toString())).orElseGet(() -> getError(404, "uuid not found"));
+            } else if (request.has("name")){
+                Optional<Game> gameOpt = gameJpaRepository.findByName(request.getString("name"));
                 return gameOpt.map(game -> ResponseEntity.ok(game.toJSON().toString())).orElseGet(() -> getError(404, "uuid not found"));
             } else {
                 return getError(400,"Missing UUID, or invalid game description");
