@@ -4,6 +4,10 @@ import me.redstoner2019.util.http.Requests;
 import org.json.JSONObject;
 import org.springframework.http.HttpHeaders;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public class AuthenticationHelper {
     private static final String authIP = "http://158.220.105.209:8080";
 
@@ -34,10 +38,25 @@ public class AuthenticationHelper {
         if(headers.containsKey("token")){
             token = headers.get("token").get(0);
         }
+        if(headers.containsKey("cookie")){
+            Map<String,String> results = getCookies(headers.get("cookie").get(0));
+            if(results.containsKey("token")){
+                token = results.get("token");
+            }
+        }
         if(headers.containsKey("Authorization")){
             token = headers.get("Authorization").get(0).replace("Bearer ", "");
         }
         if(token == null) return new AuthenticationResult("Unauthorized",false,401);
         return verifyAuth(token);
+    }
+
+    public static Map<String, String> getCookies(String cookieHeader) {
+        Map<String, String> cookies = Arrays.stream(cookieHeader.split("; "))
+                .map(cookie -> cookie.split("=", 2))  // Split into key and value
+                .filter(cookieParts -> cookieParts.length == 2)  // Ensure valid key-value pairs
+                .collect(Collectors.toMap(cookieParts -> cookieParts[0], cookieParts -> cookieParts[1]));
+
+        return cookies;
     }
 }

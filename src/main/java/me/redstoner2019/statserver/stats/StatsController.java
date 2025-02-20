@@ -10,6 +10,7 @@ import me.redstoner2019.statserver.stats.game.Game;
 import me.redstoner2019.statserver.stats.game.GameJpaRepository;
 import me.redstoner2019.statserver.stats.util.AuthenticationHelper;
 import me.redstoner2019.statserver.stats.util.AuthenticationResult;
+import me.redstoner2019.statserver.stats.util.HeadersToJson;
 import me.redstoner2019.statserver.stats.version.Version;
 import me.redstoner2019.statserver.stats.version.VersionJpaRepository;
 import me.redstoner2019.util.http.Requests;
@@ -63,7 +64,7 @@ public class StatsController {
 
         String username = "Redstoner_2019";
 
-        Game game = new Game("FNaF", username);
+        Game game = new Game("FNaF", username,"/minecraft.png");
 
         gameJpaRepository.save(game);
 
@@ -124,7 +125,10 @@ public class StatsController {
                 return getError(400,"This game already exists");
             }
 
-            game = new Game(name, username);
+
+            String icon = request.optString("icon","./default.png");
+
+            game = new Game(name, username, icon);
             gameJpaRepository.save(game);
 
             JSONObject response = new JSONObject();
@@ -320,12 +324,10 @@ public class StatsController {
      * Getting
      */
 
-    @PostMapping("/stats/game/getAll")
-    public ResponseEntity<String> getAllGames(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+    @RequestMapping(value="/stats/game/getAll", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> getAllGames(@RequestHeader HttpHeaders headers) {
         try{
-            JSONObject request = new JSONObject(s);
-
-            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(new JSONObject(),headers);
 
             if(!authResult.isSuccess()){
                 return getError(authResult.getStatus(),authResult.getMessage());
@@ -356,9 +358,10 @@ public class StatsController {
         }
     }
 
-    @PostMapping("/stats/versions/getAll")
-    public ResponseEntity<String> getAllVersions(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+    @RequestMapping(value="/stats/versions/getAll", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> getAllVersions(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers) {
         try{
+            if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject request = new JSONObject(s);
 
             if(!request.has("game")){
@@ -389,9 +392,10 @@ public class StatsController {
         }
     }
 
-    @PostMapping("/stats/challenges/getAll")
-    public ResponseEntity<String> getAllChallenges(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+    @RequestMapping(value="/stats/challenges/getAll", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> getAllChallenges(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers) {
         try{
+            if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject request = new JSONObject(s);
 
             if(!request.has("game")){
@@ -432,9 +436,10 @@ public class StatsController {
         }
     }
 
-    @PostMapping("/stats/challengeEntry/getAll")
-    public ResponseEntity<String> getAllChallengeEntries(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+    @RequestMapping(value="/stats/challengeEntry/getAll", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> getAllChallengeEntries(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers) {
         try{
+            if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject request = new JSONObject(s);
 
             if(!request.has("pageSize")){
@@ -484,9 +489,10 @@ public class StatsController {
         }
     }
 
-    @PostMapping("/stats/recentRuns/getAll")
-    public ResponseEntity<String> getAllRecentRuns(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+    @RequestMapping(value="/stats/recentRuns/getAll", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> getAllRecentRuns(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers) {
         try{
+            if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject request = new JSONObject(s);
 
             AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
@@ -514,9 +520,10 @@ public class StatsController {
     }
 
 
-    @PostMapping("/stats/challengeEntry/getAll/pages")
-    public ResponseEntity<String> getAllChallengeEntriesPages(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+    @RequestMapping(value="/stats/challengeEntry/getAll/pages", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> getAllChallengeEntriesPages(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers) {
         try{
+            if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject request = new JSONObject(s);
 
             if(!request.has("pageSize")){
@@ -558,9 +565,10 @@ public class StatsController {
         }
     }
 
-    @GetMapping("/stats/challengeEntry/getAllSorted")
-    public ResponseEntity<String> getAllSorted(@RequestBody String s){
+    @RequestMapping(value="/stats/challengeEntry/getAllSorted", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> getAllSorted(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers){
         try{
+            if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject jsonObject = new JSONObject(s);
 
             int a = jsonObject.getInt("a");
@@ -595,8 +603,25 @@ public class StatsController {
         }
     }
 
+    @RequestMapping(value="/test", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> test(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers){
+        try{
+            if(s == null) s = HeadersToJson.headersToJson(headers).toString();
+            JSONObject request = new JSONObject(s);
 
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
 
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
+
+            String username = authResult.getUsername();
+
+            return ResponseEntity.ok(request.toString());
+        }catch (Exception e){
+            return ResponseEntity.badRequest().body(e.getLocalizedMessage());
+        }
+    }
 
 
 

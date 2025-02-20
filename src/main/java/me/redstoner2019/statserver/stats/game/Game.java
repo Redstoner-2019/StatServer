@@ -18,18 +18,26 @@ public class Game {
     @Column(name="owner")
     private String owner;
 
+    @Column(name="icon")
+    private String icon = "./default.png";
+
     @Column
     private long created;
 
     public Game(){
-        this.created = System.currentTimeMillis();
+
     }
 
-    public Game(String name, String owner) {
+    public Game(String name, String owner, String icon) {
         this.id = UUID.randomUUID().toString();
         this.name = name;
         this.created = System.currentTimeMillis();
         this.owner = owner;
+        this.icon = icon;
+    }
+
+    public String getIcon() {
+        return icon;
     }
 
     public String getOwner() {
@@ -54,6 +62,7 @@ public class Game {
         json.put("name",name);
         json.put("created",created);
         json.put("owner",owner);
+        json.put("icon",icon);
         return json;
     }
 
