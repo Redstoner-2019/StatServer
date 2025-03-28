@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -72,6 +73,7 @@ public class StatsController {
 
         data.put("powerLeft",0.1);
         data.put("death","foxy");
+        data.put("place",1);
 
         Challenge ventablack = new Challenge("Ventablack","Ventablack test",game.getId(),username,data);
         Challenge night6 = new Challenge("Night 6","Night 6 test",game.getId(),username,data);
@@ -94,6 +96,7 @@ public class StatsController {
 
         for (int i = 0; i < 50; i++) {
             data.put("powerLeft",Math.random());
+            data.put("place",i);
 
             ChallengeEntry entry = new ChallengeEntry(ventablack.getId(),game.getId(),"1.3.0",data,username, data.getDouble("powerLeft"));
             challengeEntryJpaRepository.save(entry);
@@ -492,6 +495,7 @@ public class StatsController {
 
     @RequestMapping(value="/stats/recentRuns/getAll", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<String> getAllRecentRuns(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers) {
+        System.out.println("Test");
         try{
             if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject request = new JSONObject(s);
@@ -532,7 +536,7 @@ public class StatsController {
             }
 
             if(!request.has("challenge")){
-                return getError(400,"Missing pageNumber");
+                return getError(400,"Missing challenge");
             }
 
             if(!request.has("game")){
@@ -575,6 +579,10 @@ public class StatsController {
             int a = jsonObject.getInt("a");
             int b = jsonObject.getInt("b");
 
+            String challenge = jsonObject.getString("challenge");
+            String game = jsonObject.getString("game");
+            String version = jsonObject.getString("version");
+
             boolean ascending = jsonObject.has("ascending") ? jsonObject.getBoolean("ascending") : true;
             boolean zeroIndex = jsonObject.has("zeroIndex") ? jsonObject.getBoolean("zeroIndex") : false;
             String sortBy = jsonObject.has("sortBy") ? jsonObject.getString("sortBy") : "score";
@@ -590,13 +598,18 @@ public class StatsController {
             Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
             PageRequest pageRequest = PageRequest.of(pageNumber, pageSize, sort);
 
-            Page<ChallengeEntry> page = challengeEntryJpaRepository.findAll(pageRequest);
+            Page<ChallengeEntry> page = challengeEntryJpaRepository.findByChallengeAndGameAndVersionSortedByDataKey(challenge, game, version, sortBy, ascending,a, pageSize);
+            //List<ChallengeEntry> page = challengeEntryJpaRepository.findByChallengeAndGameAndVersionSortedByDataKey(challenge, game, version, sortBy, ascending,pageSize, a);
 
             JSONArray result = new JSONArray();
 
             for(ChallengeEntry ce : page.getContent()){
                 result.put(ce.toJSON());
             }
+
+            /*for(ChallengeEntry ce : page){
+                result.put(ce.toJSON());
+            }*/
 
             return ResponseEntity.ok(result.toString());
         }catch (Exception e){
@@ -663,11 +676,11 @@ public class StatsController {
 
     public Page<ChallengeEntry> getChallengeEntries(String challengeId,String game, String version, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
-        return challengeEntryJpaRepository.findByChallengeIdAndGameAndVersionOrderByScore(challengeId,game,version, pageable);
+        return challengeEntryJpaRepository.findByChallengeIdAndGameAndVersion(challengeId,game,version, pageable);
     }
 
     public int getChallengeEntriesPages(String challengeId,String game, String version, int size) {
         PageRequest pageable = PageRequest.of(0, size);
-        return challengeEntryJpaRepository.findByChallengeIdAndGameAndVersionOrderByScore(challengeId,game,version, pageable).getTotalPages();
+        return challengeEntryJpaRepository.findByChallengeIdAndGameAndVersion(challengeId,game,version, pageable).getTotalPages();
     }
 }
