@@ -5,102 +5,81 @@ import me.redstoner2019.statserver.stats.util.JSONObjectConverter;
 import org.json.JSONObject;
 
 import java.util.UUID;
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
+@Table(name = "challenge_entry")
 public class ChallengeEntry {
+
     @Id
-    private String id;
+    @GeneratedValue
+    private UUID id;
 
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Convert(converter = JSONObjectConverter.class)
-    @Column(columnDefinition = "TEXT", name = "data")
-    private JSONObject data;
-
-    @Column(name="challengeId")
+    private String gameId;
     private String challengeId;
-
-    @Column(name="game")
-    private String game;
-
-    @Column(name="version")
+    private String username;
     private String version;
 
-    @Column(name="userId")
-    private String userId;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String data; // JSON as String
 
-    @Column
-    private long created;
-
-    @Column
-    private double score;
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false, name = "created")
+    private LocalDateTime created;
 
     public ChallengeEntry() {
-        this.created = System.currentTimeMillis();
     }
 
-    public ChallengeEntry(String challenge,String game, String version, JSONObject data, String userId, double score) {
-        this.challengeId = challenge;
-        this.data = data;
-        this.id = UUID.randomUUID().toString();
-        this.created = System.currentTimeMillis();
-        this.userId = userId;
-        this.score = score;
-        this.game = game;
+    public ChallengeEntry(UUID id, String gameId, String challengeId, String username, String version, String data, LocalDateTime created) {
+        this.id = id;
+        this.gameId = gameId;
+        this.challengeId = challengeId;
+        this.username = username;
         this.version = version;
+        this.data = data;
+        this.created = created;
     }
 
-    public String getGame() {
-        return game;
-    }
+    // Getters and Setters
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+
+    public String getGameId() { return gameId; }
+    public void setGameId(String gameId) { this.gameId = gameId; }
+
+    public String getChallengeId() { return challengeId; }
+    public void setChallengeId(String challengeId) { this.challengeId = challengeId; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getData() { return data; }
+    public void setData(String data) { this.data = data; }
+
+    public LocalDateTime getCreated() { return created; }
+    public void setCreated(LocalDateTime created) { this.created = created; }
 
     public String getVersion() {
         return version;
     }
-
-    public double getScore() {
-        return score;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public long getCreated() {
-        return created;
-    }
-
-    public String getChallengeId() {
-        return challengeId;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public JSONObject getData() {
-        return data;
-    }
-
-    public String getChallenge() {
-        return challengeId;
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id",id);
-        json.put("data",data);
+        json.put("gameId",gameId);
         json.put("challengeId",challengeId);
-        json.put("userId",userId);
-        json.put("created",created);
-        json.put("score",score);
-        json.put("game",game);
+        json.put("username",username);
         json.put("version",version);
+        json.put("created",created);
+        json.put("data",new JSONObject(data));
         return json;
-    }
-
-    @Override
-    public String toString() {
-        return toJSON().toString();
     }
 }

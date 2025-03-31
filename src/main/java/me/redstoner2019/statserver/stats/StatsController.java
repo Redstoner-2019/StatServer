@@ -2,8 +2,9 @@ package me.redstoner2019.statserver.stats;
 
 import me.redstoner2019.statserver.stats.challenge.Challenge;
 import me.redstoner2019.statserver.stats.challenge.entry.ChallengeEntry;
-import me.redstoner2019.statserver.stats.challenge.entry.ChallengeEntryJpaRepository;
 import me.redstoner2019.statserver.stats.challenge.ChallengeJpaRepository;
+import me.redstoner2019.statserver.stats.challenge.entry.ChallengeEntryJpaRepository;
+import me.redstoner2019.statserver.stats.challenge.entry.JsonValueType;
 import me.redstoner2019.statserver.stats.challenge.version.ChallengeVersion;
 import me.redstoner2019.statserver.stats.challenge.version.ChallengeVersionJpaRepository;
 import me.redstoner2019.statserver.stats.game.Game;
@@ -13,21 +14,18 @@ import me.redstoner2019.statserver.stats.util.AuthenticationResult;
 import me.redstoner2019.statserver.stats.util.HeadersToJson;
 import me.redstoner2019.statserver.stats.version.Version;
 import me.redstoner2019.statserver.stats.version.VersionJpaRepository;
-import me.redstoner2019.util.http.Requests;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -94,11 +92,61 @@ public class StatsController {
         challengeVersionJpaRepository.save(new ChallengeVersion("1.2.0",night6.getId()));
         challengeVersionJpaRepository.save(new ChallengeVersion("1.3.0",night6.getId()));
 
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 15; i++) {
             data.put("powerLeft",Math.random());
             data.put("place",i);
 
-            ChallengeEntry entry = new ChallengeEntry(ventablack.getId(),game.getId(),"1.3.0",data,username, data.getDouble("powerLeft"));
+            ChallengeEntry entry = new ChallengeEntry();
+            entry.setChallengeId(ventablack.getId());
+            entry.setGameId(game.getId());
+            entry.setUsername(username);
+            entry.setVersion("1.3.0");
+            entry.setData(data.toString());
+            challengeEntryJpaRepository.save(entry);
+        }
+
+        username = "Redstoner_2020";
+
+        for (int i = 0; i < 15; i++) {
+            data.put("powerLeft",Math.random());
+            data.put("place",i);
+
+            ChallengeEntry entry = new ChallengeEntry();
+            entry.setChallengeId(ventablack.getId());
+            entry.setGameId(game.getId());
+            entry.setUsername(username);
+            entry.setVersion("1.3.0");
+            entry.setData(data.toString());
+            challengeEntryJpaRepository.save(entry);
+        }
+
+        username = "Aru";
+
+        for (int i = 0; i < 15; i++) {
+            data.put("powerLeft",Math.random());
+            data.put("place",i);
+
+            ChallengeEntry entry = new ChallengeEntry();
+            entry.setChallengeId(ventablack.getId());
+            entry.setGameId(game.getId());
+            entry.setUsername(username);
+            entry.setVersion("1.3.0");
+            entry.setData(data.toString());
+            challengeEntryJpaRepository.save(entry);
+        }
+
+        username = "Alessia";
+
+        for (int i = 0; i < 15; i++) {
+            data.put("powerLeft",Math.random());
+            data.put("place",i);
+
+            ChallengeEntry entry = new ChallengeEntry();
+            entry.setChallengeId(ventablack.getId());
+            entry.setGameId(game.getId());
+            entry.setUsername(username);
+            entry.setVersion("1.3.0");
+            entry.setData(data.toString());
             challengeEntryJpaRepository.save(entry);
         }
     }
@@ -314,7 +362,7 @@ public class StatsController {
                 }
             }
 
-            ChallengeEntry entry = new ChallengeEntry(challenge.getId(),request.getString("game"),request.getString("version"), data, username, request.getDouble("score"));
+            ChallengeEntry entry = new ChallengeEntry(UUID.randomUUID(),request.getString("game"),challenge.getId(),username,request.getString("version"), data.toString(), LocalDateTime.now());
 
             challengeEntryJpaRepository.save(entry);
 
@@ -332,6 +380,8 @@ public class StatsController {
     public ResponseEntity<String> getAllGames(@RequestHeader HttpHeaders headers) {
         try{
             AuthenticationResult authResult = AuthenticationHelper.verifyAuth(new JSONObject(),headers);
+
+            System.out.println(authResult.getMessage());
 
             if(!authResult.isSuccess()){
                 return getError(authResult.getStatus(),authResult.getMessage());
@@ -440,7 +490,30 @@ public class StatsController {
         }
     }
 
-    @RequestMapping(value="/stats/challengeEntry/getAll", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value="/stats/challenges/get", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> getChallenge(@RequestBody String s, @RequestHeader HttpHeaders headers) {
+        try{
+            if(s == null) s = HeadersToJson.headersToJson(headers).toString();
+            JSONObject request = new JSONObject(s);
+
+            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
+
+            if(!authResult.isSuccess()){
+                return getError(authResult.getStatus(),authResult.getMessage());
+            }
+
+            if (request.has("uuid")){
+                Optional<Challenge> gameOpt = challengeJpaRepository.findById(request.getString("uuid"));
+                return gameOpt.map(game -> ResponseEntity.ok(game.toJSON().toString())).orElseGet(() -> getError(404, "uuid not found"));
+            } else {
+                return getError(400,"Missing UUID, or invalid game description");
+            }
+        }catch (Exception e){
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    /*@RequestMapping(value="/stats/challengeEntry/getAll", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<String> getAllChallengeEntries(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers) {
         try{
             if(s == null) s = HeadersToJson.headersToJson(headers).toString();
@@ -491,7 +564,7 @@ public class StatsController {
         }catch (Exception e){
             return ResponseEntity.badRequest().body(e.getLocalizedMessage());
         }
-    }
+    }*/
 
     @RequestMapping(value="/stats/recentRuns/getAll", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<String> getAllRecentRuns(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers) {
@@ -562,7 +635,7 @@ public class StatsController {
 
             JSONObject result = new JSONObject();
 
-            result.put("pages",getChallengeEntriesPages(challenge,game, version, pageSize));
+            //result.put("pages",getChallengeEntriesPages(challenge,game, version, pageSize));
 
             return ResponseEntity.ok(result.toString());
         }catch (Exception e){
@@ -576,43 +649,47 @@ public class StatsController {
             if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject jsonObject = new JSONObject(s);
 
-            int a = jsonObject.getInt("a");
-            int b = jsonObject.getInt("b");
+            int pageNumber = jsonObject.getInt("pageNumber");
+            int pageSize = jsonObject.getInt("pageSize");
 
             String challenge = jsonObject.getString("challenge");
             String game = jsonObject.getString("game");
             String version = jsonObject.getString("version");
 
-            boolean ascending = jsonObject.has("ascending") ? jsonObject.getBoolean("ascending") : true;
-            boolean zeroIndex = jsonObject.has("zeroIndex") ? jsonObject.getBoolean("zeroIndex") : false;
+            boolean ascending = !jsonObject.has("ascending") || jsonObject.getBoolean("ascending");
             String sortBy = jsonObject.has("sortBy") ? jsonObject.getString("sortBy") : "score";
 
-            if(zeroIndex) {
-                a++;
-                b++;
+            Page<ChallengeEntry> p = challengeEntryJpaRepository.findAll(PageRequest.of(0, 1));
+            ChallengeEntry ce = p.iterator().next();
+
+            JsonValueType type;
+
+            switch (new JSONObject(ce.getData()).get(sortBy).getClass().getSimpleName()) {
+                case "Double", "BigDecimal" -> type = JsonValueType.DOUBLE;
+                case "Integer" -> type = JsonValueType.INTEGER;
+                case "Long" -> type = JsonValueType.INTEGER;
+                case "String" -> type = JsonValueType.STRING;
+                default -> type = JsonValueType.DOUBLE;
             }
 
-            int pageSize = b - a + 1;
-            int pageNumber = a / pageSize;
-
-            Sort sort = ascending ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-            PageRequest pageRequest = PageRequest.of(pageNumber, pageSize, sort);
-
-            Page<ChallengeEntry> page = challengeEntryJpaRepository.findByChallengeAndGameAndVersionSortedByDataKey(challenge, game, version, sortBy, ascending,a, pageSize);
-            //List<ChallengeEntry> page = challengeEntryJpaRepository.findByChallengeAndGameAndVersionSortedByDataKey(challenge, game, version, sortBy, ascending,pageSize, a);
+            Pageable pageable = PageRequest.of(pageNumber, pageSize);
+            Page<ChallengeEntry> page = challengeEntryJpaRepository.findTopEntriesPerUser(game, challenge, version, sortBy, type, !ascending, pageable);
 
             JSONArray result = new JSONArray();
 
-            for(ChallengeEntry ce : page.getContent()){
-                result.put(ce.toJSON());
+            Iterator<ChallengeEntry> iterator = page.iterator();
+            while (iterator.hasNext()) {
+                ChallengeEntry challengeEntry = iterator.next();
+                result.put(challengeEntry.toJSON());
             }
 
-            /*for(ChallengeEntry ce : page){
-                result.put(ce.toJSON());
-            }*/
+            JSONObject resultObject = new JSONObject();
+            resultObject.put("result",result);
+            resultObject.put("pages",challengeEntryJpaRepository.countPagesForTopEntries(game,challenge,version,pageSize));
 
-            return ResponseEntity.ok(result.toString());
+            return ResponseEntity.ok(resultObject.toString());
         }catch (Exception e){
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(e.getLocalizedMessage());
         }
     }
@@ -652,8 +729,6 @@ public class StatsController {
                 return getError(authResult.getStatus(),authResult.getMessage());
             }
 
-            String username = authResult.getUsername();
-
             if (request.has("uuid")){
                 Optional<Game> gameOpt = gameJpaRepository.findById(request.getString("uuid"));
                 return gameOpt.map(game -> ResponseEntity.ok(game.toJSON().toString())).orElseGet(() -> getError(404, "uuid not found"));
@@ -674,7 +749,7 @@ public class StatsController {
         return ResponseEntity.status(status).body(response.toString());
     }
 
-    public Page<ChallengeEntry> getChallengeEntries(String challengeId,String game, String version, int page, int size) {
+    /*public Page<ChallengeEntry> getChallengeEntries(String challengeId,String game, String version, int page, int size) {
         PageRequest pageable = PageRequest.of(page, size);
         return challengeEntryJpaRepository.findByChallengeIdAndGameAndVersion(challengeId,game,version, pageable);
     }
@@ -682,5 +757,5 @@ public class StatsController {
     public int getChallengeEntriesPages(String challengeId,String game, String version, int size) {
         PageRequest pageable = PageRequest.of(0, size);
         return challengeEntryJpaRepository.findByChallengeIdAndGameAndVersion(challengeId,game,version, pageable).getTotalPages();
-    }
+    }*/
 }

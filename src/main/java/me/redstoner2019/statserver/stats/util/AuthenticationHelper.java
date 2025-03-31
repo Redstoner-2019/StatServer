@@ -5,6 +5,7 @@ import org.json.JSONObject;
 import org.springframework.http.HttpHeaders;
 
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -45,6 +46,7 @@ public class AuthenticationHelper {
             }
         }
         if(headers.containsKey("Authorization")){
+            Base64.getDecoder().decode(headers.get("Authorization").get(0));
             token = headers.get("Authorization").get(0).replace("Bearer ", "");
         }
         if(token == null) return new AuthenticationResult("Unauthorized",false,401);
