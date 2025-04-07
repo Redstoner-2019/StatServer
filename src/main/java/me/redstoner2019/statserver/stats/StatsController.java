@@ -48,7 +48,7 @@ public class StatsController {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                //init();
+                init();
                 logger.log(Level.INFO,"Init done");
             }
         }).start();
@@ -92,62 +92,21 @@ public class StatsController {
         challengeVersionJpaRepository.save(new ChallengeVersion("1.2.0",night6.getId()));
         challengeVersionJpaRepository.save(new ChallengeVersion("1.3.0",night6.getId()));
 
-        for (int i = 0; i < 15; i++) {
-            data.put("powerLeft",Math.random());
-            data.put("place",i);
+        List<String> users = List.of("Alessia","Akira","Redstoner_2019","aru","lachso","theytrin","nicklas","alex","gansi","lami","flao");
 
-            ChallengeEntry entry = new ChallengeEntry();
-            entry.setChallengeId(ventablack.getId());
-            entry.setGameId(game.getId());
-            entry.setUsername(username);
-            entry.setVersion("1.3.0");
-            entry.setData(data.toString());
-            challengeEntryJpaRepository.save(entry);
-        }
+        for(String user : users){
+            for (int i = 0; i < 50; i++) {
+                data.put("powerLeft",Math.floor(Math.random() * 1000) / 1000);
+                data.put("place",i);
 
-        username = "Redstoner_2020";
-
-        for (int i = 0; i < 15; i++) {
-            data.put("powerLeft",Math.random());
-            data.put("place",i);
-
-            ChallengeEntry entry = new ChallengeEntry();
-            entry.setChallengeId(ventablack.getId());
-            entry.setGameId(game.getId());
-            entry.setUsername(username);
-            entry.setVersion("1.3.0");
-            entry.setData(data.toString());
-            challengeEntryJpaRepository.save(entry);
-        }
-
-        username = "Aru";
-
-        for (int i = 0; i < 15; i++) {
-            data.put("powerLeft",Math.random());
-            data.put("place",i);
-
-            ChallengeEntry entry = new ChallengeEntry();
-            entry.setChallengeId(ventablack.getId());
-            entry.setGameId(game.getId());
-            entry.setUsername(username);
-            entry.setVersion("1.3.0");
-            entry.setData(data.toString());
-            challengeEntryJpaRepository.save(entry);
-        }
-
-        username = "Alessia";
-
-        for (int i = 0; i < 15; i++) {
-            data.put("powerLeft",Math.random());
-            data.put("place",i);
-
-            ChallengeEntry entry = new ChallengeEntry();
-            entry.setChallengeId(ventablack.getId());
-            entry.setGameId(game.getId());
-            entry.setUsername(username);
-            entry.setVersion("1.3.0");
-            entry.setData(data.toString());
-            challengeEntryJpaRepository.save(entry);
+                ChallengeEntry entry = new ChallengeEntry();
+                entry.setChallengeId(ventablack.getId());
+                entry.setGameId(game.getId());
+                entry.setUsername(user);
+                entry.setVersion("1.3.0");
+                entry.setData(data.toString());
+                challengeEntryJpaRepository.save(entry);
+            }
         }
     }
 
