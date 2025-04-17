@@ -49,17 +49,32 @@ public class StatsController {
             @Override
             public void run() {
                 init();
-                logger.log(Level.INFO,"Init done");
+                logger.log(Level.INFO,"Init completed.");
             }
         }).start();
     }
 
+    int status = 0;
+
+    public void logStatus(int max){
+        logger.log(Level.INFO,"Completed " + String.format("%d / %d (%.2f %%)",status,max, ((double) status / max) * 100.0));
+    }
+
     public void init(){
+        logger.log(Level.INFO,"Init completed.");
+        status=0;
+        //List<String> users = List.of("Alessia","Akira","Redstoner_2019","aru","lachso","theytrin","nicklas","alex","gansi","lami","flao");
+        List<String> users = List.of("Luki", "Krankrichter", "Reicher Rentner", "Nico Kacki", "Dinis Köter", "Phillip Vincent Giovanni Elberfeld", "Jade", "Mischa", "marsel", "Mirco", "Amir", "Sergej", "Maggsimus Primus", "User 1", "User 2", "User 3", "User 4", "User 5", "User 6", "User 7", "User 8", "User 9", "User 10");
+        logStatus(2 + users.size());
+
         gameJpaRepository.deleteAll();
         challengeJpaRepository.deleteAll();
         challengeEntryJpaRepository.deleteAll();
         versionJpaRepository.deleteAll();
         challengeVersionJpaRepository.deleteAll();
+
+        status++;
+        logStatus(2 + users.size());
 
         String username = "Redstoner_2019";
 
@@ -92,7 +107,8 @@ public class StatsController {
         challengeVersionJpaRepository.save(new ChallengeVersion("1.2.0",night6.getId()));
         challengeVersionJpaRepository.save(new ChallengeVersion("1.3.0",night6.getId()));
 
-        List<String> users = List.of("Alessia","Akira","Redstoner_2019","aru","lachso","theytrin","nicklas","alex","gansi","lami","flao");
+        status++;
+        logStatus(2 + users.size());
 
         for(String user : users){
             for (int i = 0; i < 50; i++) {
@@ -107,6 +123,8 @@ public class StatsController {
                 entry.setData(data.toString());
                 challengeEntryJpaRepository.save(entry);
             }
+            status++;
+            logStatus(2 + users.size());
         }
     }
 
@@ -350,7 +368,7 @@ public class StatsController {
 
             JSONArray games = new JSONArray();
 
-            logger.log(Level.INFO,"All Games");
+            //logger.log(Level.INFO,"All Games");
 
             List<Game> gameList = gameJpaRepository.findAll();
 
