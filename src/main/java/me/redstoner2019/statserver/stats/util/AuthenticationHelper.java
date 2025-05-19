@@ -46,7 +46,7 @@ public class AuthenticationHelper {
             }
         }
         if(headers.containsKey("Authorization")){
-            Base64.getDecoder().decode(headers.get("Authorization").get(0));
+            //Base64.getDecoder().decode(headers.get("Authorization").get(0));
             token = headers.get("Authorization").get(0).replace("Bearer ", "");
         }
         if(token == null) return new AuthenticationResult("Unauthorized",false,401);

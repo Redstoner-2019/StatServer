@@ -64,7 +64,14 @@ public class StatsController {
         logger.log(Level.INFO,"Init completed.");
         status=0;
         //List<String> users = List.of("Alessia","Akira","Redstoner_2019","aru","lachso","theytrin","nicklas","alex","gansi","lami","flao");
-        List<String> users = List.of("Luki", "Krankrichter", "Reicher Rentner", "Nico Kacki", "Dinis Köter", "Phillip Vincent Giovanni Elberfeld", "Jade", "Mischa", "marsel", "Mirco", "Amir", "Sergej", "Maggsimus Primus", "User 1", "User 2", "User 3", "User 4", "User 5", "User 6", "User 7", "User 8", "User 9", "User 10");
+        List<String> users = new ArrayList<>(List.of("Luki", "Krankrichter", "Reicher Rentner", "Nico Kacki", "Dinis Köter", "Phillip Vincent Giovanni Elberfeld", "Jade", "Mischa", "marsel", "Mirco", "Amir", "Sergej", "Maggsimus Primus"));
+        users.clear();
+        for (int i = 0; i < 35; i++) {
+            users.add("User " + (i + 1));
+        }
+
+        users.clear();
+
         logStatus(2 + users.size());
 
         gameJpaRepository.deleteAll();
@@ -98,20 +105,35 @@ public class StatsController {
         versionJpaRepository.save(new Version(game.getId(),"1.1.0",1));
         versionJpaRepository.save(new Version(game.getId(),"1.2.0",2));
         versionJpaRepository.save(new Version(game.getId(),"1.3.0",3));
+        versionJpaRepository.save(new Version(game.getId(),"1.4.0",4));
+        versionJpaRepository.save(new Version(game.getId(),"1.5.0",5));
+
+        //challengeVersionJpaRepository.save(new ChallengeVersion("1.0.0",ventablack.getId()));
+
+
+        //Version v130 = new Version(game.getId(),"1.3.0",3);
+
+        //versionJpaRepository.save(new Version(game.getId(),"1.0.0",0));
+        //versionJpaRepository.save(new Version(game.getId(),"1.1.0",1));
+        //versionJpaRepository.save(new Version(game.getId(),"1.2.0",2));
+        //versionJpaRepository.save(v130);
 
         challengeVersionJpaRepository.save(new ChallengeVersion("1.0.0",ventablack.getId()));
         challengeVersionJpaRepository.save(new ChallengeVersion("1.1.0",ventablack.getId()));
         challengeVersionJpaRepository.save(new ChallengeVersion("1.2.0",ventablack.getId()));
         challengeVersionJpaRepository.save(new ChallengeVersion("1.3.0",ventablack.getId()));
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.4.0",ventablack.getId()));
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.5.0",ventablack.getId()));
 
-        challengeVersionJpaRepository.save(new ChallengeVersion("1.2.0",night6.getId()));
         challengeVersionJpaRepository.save(new ChallengeVersion("1.3.0",night6.getId()));
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.4.0",night6.getId()));
+        challengeVersionJpaRepository.save(new ChallengeVersion("1.5.0",night6.getId()));
 
         status++;
         logStatus(2 + users.size());
 
         for(String user : users){
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 2; i++) {
                 data.put("powerLeft",Math.floor(Math.random() * 1000) / 1000);
                 data.put("place",i);
 
@@ -339,12 +361,13 @@ public class StatsController {
                 }
             }
 
-            ChallengeEntry entry = new ChallengeEntry(UUID.randomUUID(),request.getString("game"),challenge.getId(),username,request.getString("version"), data.toString(), LocalDateTime.now());
+            ChallengeEntry entry = new ChallengeEntry(UUID.randomUUID().toString(),request.getString("game"),challenge.getId(),username,request.getString("version"), data.toString(), LocalDateTime.now());
 
             challengeEntryJpaRepository.save(entry);
 
             return ResponseEntity.ok(request.toString());
         }catch (Exception e){
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }

@@ -16,8 +16,7 @@ import java.util.UUID;
 public class ChallengeEntry {
 
     @Id
-    @GeneratedValue
-    private UUID id;
+    private String id;
 
     private String gameId;
     private String challengeId;
@@ -33,9 +32,10 @@ public class ChallengeEntry {
     private LocalDateTime created;
 
     public ChallengeEntry() {
+        this.id = UUID.randomUUID().toString();
     }
 
-    public ChallengeEntry(UUID id, String gameId, String challengeId, String username, String version, String data, LocalDateTime created) {
+    public ChallengeEntry(String id, String gameId, String challengeId, String username, String version, String data, LocalDateTime created) {
         this.id = id;
         this.gameId = gameId;
         this.challengeId = challengeId;
@@ -46,8 +46,8 @@ public class ChallengeEntry {
     }
 
     // Getters and Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getGameId() { return gameId; }
     public void setGameId(String gameId) { this.gameId = gameId; }
