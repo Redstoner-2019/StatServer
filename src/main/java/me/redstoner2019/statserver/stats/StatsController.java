@@ -368,7 +368,7 @@ public class StatsController {
             return ResponseEntity.ok(request.toString());
         }catch (Exception e){
             e.printStackTrace();
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.internalServerError().build();
         }
     }
 
