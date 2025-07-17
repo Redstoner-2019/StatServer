@@ -24,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.logging.Level;
@@ -101,12 +102,12 @@ public class StatsController {
         challengeJpaRepository.save(ventablack);
         challengeJpaRepository.save(night6);
 
-        versionJpaRepository.save(new Version(game.getId(),"1.0.0",0));
-        versionJpaRepository.save(new Version(game.getId(),"1.1.0",1));
-        versionJpaRepository.save(new Version(game.getId(),"1.2.0",2));
-        versionJpaRepository.save(new Version(game.getId(),"1.3.0",3));
-        versionJpaRepository.save(new Version(game.getId(),"1.4.0",4));
-        versionJpaRepository.save(new Version(game.getId(),"1.5.0",5));
+        //versionJpaRepository.save(new Version(game.getId(),"1.0.0",0));
+        //versionJpaRepository.save(new Version(game.getId(),"1.1.0",1));
+        //versionJpaRepository.save(new Version(game.getId(),"1.2.0",2));
+        //versionJpaRepository.save(new Version(game.getId(),"1.3.0",3));
+        //versionJpaRepository.save(new Version(game.getId(),"1.4.0",4));
+        //versionJpaRepository.save(new Version(game.getId(),"1.5.0",5));
 
         //challengeVersionJpaRepository.save(new ChallengeVersion("1.0.0",ventablack.getId()));
 
@@ -192,6 +193,45 @@ public class StatsController {
         }
     }
 
+    @PostMapping("/stats/challenge/version/update")
+    public ResponseEntity<String> updateChallengeVersion(@RequestHeader HttpHeaders headers, @RequestParam String challengeId, @RequestParam String versionName, @RequestParam String en) {
+        boolean enabled = Boolean.parseBoolean(en);
+
+        if(challengeJpaRepository.findById(challengeId).isEmpty()){
+            return ResponseEntity.status(404).build();
+        }
+
+        Challenge challenge = challengeJpaRepository.findById(challengeId).get();
+
+        Optional<ChallengeVersion> data = challengeVersionJpaRepository.findByVersionAndChallenge(versionName, challengeId);
+
+        if(enabled){
+            if(data.isEmpty()){
+                ChallengeVersion challengeVersion = new ChallengeVersion(versionName, challengeId);
+                challengeVersionJpaRepository.save(challengeVersion);
+                return ResponseEntity.noContent().build();
+            }
+        } else {
+            if(data.isPresent()){
+                challengeVersionJpaRepository.delete(data.get());
+                return ResponseEntity.noContent().build();
+            }
+        }
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/stats/challenge/version/get")
+    public ResponseEntity<ChallengeVersion> getChallengeVersion(@RequestHeader HttpHeaders headers, @RequestParam String challengeId, @RequestParam String versionName) {
+        Optional<ChallengeVersion> data = challengeVersionJpaRepository.findByVersionAndChallenge(versionName, challengeId);
+
+        if(data.isPresent()){
+            return ResponseEntity.ok(data.get());
+        } else {
+            return ResponseEntity.noContent().build();
+        }
+    }
+
     @PostMapping("/stats/challenge/create")
     public ResponseEntity<String> createChallenge(@RequestBody String s, @RequestHeader HttpHeaders headers) {
         try{
@@ -271,6 +311,10 @@ public class StatsController {
                 return getError(400,"Missing versionNumber");
             }
 
+            if(!request.has("releaseURL")){
+                return getError(400,"Missing releaseURL");
+            }
+
             AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
 
             if(!authResult.isSuccess()){
@@ -291,7 +335,7 @@ public class StatsController {
                 return ResponseEntity.status(210).body(versionOpt.get().toJSON().toString());
             }
 
-            Version version = new Version(request.getString("game"), request.getString("version"), request.getLong("versionNumber"));
+            Version version = new Version(request.getString("game"), request.getString("version"), request.getLong("versionNumber"), request.getString("releaseURL"));
 
             versionJpaRepository.save(version);
 
@@ -377,18 +421,8 @@ public class StatsController {
      */
 
     @RequestMapping(value="/stats/game/getAll", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> getAllGames(@RequestHeader HttpHeaders headers) {
+    public ResponseEntity<String> getAllGames(@RequestBody(required = false) String s, @RequestHeader HttpHeaders headers) {
         try{
-            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(new JSONObject(),headers);
-
-            System.out.println(authResult.getMessage());
-
-            if(!authResult.isSuccess()){
-                return getError(authResult.getStatus(),authResult.getMessage());
-            }
-
-            String username = authResult.getUsername();
-
             JSONArray games = new JSONArray();
 
             //logger.log(Level.INFO,"All Games");
@@ -417,18 +451,6 @@ public class StatsController {
         try{
             if(s == null) s = HeadersToJson.headersToJson(headers).toString();
             JSONObject request = new JSONObject(s);
-
-            if(!request.has("game")){
-                return getError(400,"Missing game");
-            }
-
-            AuthenticationResult authResult = AuthenticationHelper.verifyAuth(request,headers);
-
-            if(!authResult.isSuccess()){
-                return getError(authResult.getStatus(),authResult.getMessage());
-            }
-
-            String username = authResult.getUsername();
 
             String game = request.getString("game");
 

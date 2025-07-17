@@ -51,6 +51,10 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
@@ -88,12 +92,106 @@
     </dependencies>
 
     <build>
+        <finalName>${project.artifactId}-${project.version}</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <!--
+                <executions>
+                    <execution>
+                        <id>upload-jar</id>
+                        <phase>install</phase>
+                        <configuration>
+                            <target name="upload-maven-artifact">
+                                <echo message="➡ Creating target folder on server..."/>
+                                <exec executable="cmd">
+                                    <arg value="/c"/>
+                                    <arg value="ssh -o StrictHostKeyChecking=accept-new -i ${ssh.keyfile} ${user}@${ip} &quot;mkdir -p /var/maven-repo/${groupIdPath}/${project.artifactId}/${project.version}&quot;"/>
+                                </exec>
+                                <echo message="➡ Generating effective POM..."/>
+                                <exec executable="cmd">
+                                    <arg value="/c"/>
+                                    <arg value="&quot;${maven.home}\\bin\\mvn.cmd&quot; help:effective-pom -Doutput=${project.build.directory}\\${project.build.finalName}.pom"/>
+                                </exec>
+                                <echo message="➡ Uploading Maven JAR..."/>
+                                <exec executable="cmd">
+                                    <arg value="/c"/>
+                                    <arg value="scp -i ${ssh.keyfile} ${project.build.directory}\\${project.build.finalName}.jar ${user}@${ip}:/var/maven-repo/${groupIdPath}/${project.artifactId}/${project.version}/"/>
+                                </exec>
+                                <echo message="➡ Uploading Maven POM..."/>
+                                <exec executable="cmd">
+                                    <arg value="/c"/>
+                                    <arg value="scp -i ${ssh.keyfile} ${project.build.directory}\\${project.build.finalName}.pom ${user}@${ip}:/var/maven-repo/${groupIdPath}/${project.artifactId}/${project.version}/"/>
+                                </exec>
+                                <echo message="✅ Upload complete."/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                -->
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <!-- version is inherited from your parent -->
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>deploy</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>upload-to-deploy-folder</id>
+                                <phase>install</phase>
+                                <configuration>
+                                    <target>
+                                        <echo message="➡ Uploading Deploy JAR..."/>
+                                        <scp file="${project.build.directory}/${project.build.finalName}.jar"
+                                             todir="root@158.220.105.209:/root/StatServer.jar"
+                                             trust="true"
+                                             password="Eisenbahn24" />
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.apache.ant</groupId>
+                                <artifactId>ant-jsch</artifactId>
+                                <version>1.10.9</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>com.jcraft</groupId>
+                                <artifactId>jsch</artifactId>
+                                <version>0.1.55</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

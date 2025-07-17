@@ -21,13 +21,17 @@ public class Version {
     @Column(name="versionNumber")
     private long versionNumber;
 
+    @Column(name="releaseURL")
+    private String releaseURL;
+
     public Version() {
     }
 
-    public Version(String game, String version, long versionNumber) {
+    public Version(String game, String version, long versionNumber, String releaseURL) {
         this.game = game;
         this.version = version;
         this.versionNumber = versionNumber;
+        this.releaseURL = releaseURL;
         this.id = UUID.randomUUID().toString();
     }
 
@@ -47,11 +51,17 @@ public class Version {
         return versionNumber;
     }
 
+    public String getReleaseURL() {
+        return releaseURL;
+    }
+
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("id",id);
         json.put("game",game);
         json.put("version", version);
+        json.put("versionNumber", versionNumber);
+        json.put("releaseURL", releaseURL);
         return json;
     }
 }
